@@ -62,9 +62,15 @@ module Stapler
 
       if cli.config[:version]
         stapler.version
-      else
+      elsif attach(cli.config)
         stapler.attach(cli.config, Stapler::Configuration.new.get_metadata)
+      else
+        puts cli.banner
       end
+    end
+
+    def attach(config)
+      config[:application] && config[:uuid] && config[:device]
     end
   end
 end
