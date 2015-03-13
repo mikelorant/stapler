@@ -1,5 +1,5 @@
 require "stapler/version"
-
-module Stapler
-  # Your code goes here...
-end
+require "stapler/base"
+require "stapler/configuration"
+require "stapler/commandline"
+require "stapler/aws/ec2"
