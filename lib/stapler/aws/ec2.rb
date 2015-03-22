@@ -55,16 +55,20 @@ module Stapler
     end
 
     def tag_volume(volume_id, volume_name, project, application, uuid)
-      @ec2.create_tags(
-        resources: [ volume_id ],
-        tags: [
-          { key: "Name",        value: volume_name },
-          { key: "Project",     value: project },
-          { key: "Application", value: application },
-          { key: "UUID",        value: uuid },
-          { key: "ManagedBy",   value: "Stapler" }
-        ]
-      )
+      begin
+        @ec2.create_tags(
+          resources: [ volume_id ],
+          tags: [
+            { key: "Name",        value: volume_name },
+            { key: "Project",     value: project },
+            { key: "Application", value: application },
+            { key: "UUID",        value: uuid },
+            { key: "ManagedBy",   value: "Stapler" }
+          ]
+        )
+      rescue Aws::EC2::Errors::RequestLimitExceeded
+        nil
+      end
     end
 
     def attach_volume(volume_id, instance_id, device)

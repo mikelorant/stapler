@@ -12,9 +12,9 @@ module Stapler
           url = URI.parse('http://169.254.169.254/latest/dynamic/instance-identity/document')
           resp = Net::HTTP.get_response(url)
 
-          return nil if response.code != "200"
+          return nil if resp.code != "200"
 
-          JSON.parse(resp.body)
+          JSON.parse(resp.body, :symbolize_names => true)
         }
       rescue Timeout::Error
         JSON.parse(File.read('simulate.json'), :symbolize_names => true)

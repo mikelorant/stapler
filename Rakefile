@@ -10,6 +10,8 @@ namespace 'fury' do
     gemspec = args[:gemspec] ||
               FileList["#{Dir.pwd}/*.gemspec"][0]
 
+    as = args[:as] || 'fairfax'
+
     if gemspec.nil? || !File.exist?(gemspec)
       puts "No gemspec found"
     else
@@ -26,7 +28,7 @@ namespace 'fury' do
       gemfile = File.basename(spec.cache_file)
 
       params = ['push', gemfile]
-      params << "--as=#{args[:as]}" if args[:as]
+      params << "--as=#{args[:as]}" if as
 
       Gemfury::Command::App.start(params)
     end
