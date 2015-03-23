@@ -1,3 +1,4 @@
+# Stapler
 module Stapler
-  VERSION = "0.1.1"
+  VERSION = '0.9.1'
 end

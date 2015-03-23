@@ -4,6 +4,8 @@ require 'rubygems/package'
 require 'gemfury'
 require 'gemfury/command'
 
+require 'rubocop/rake_task'
+
 namespace 'fury' do
   desc "Build gem and push it to Gemfury"
   task :release, [:gemspec, :as] do |t, args|
@@ -37,4 +39,14 @@ end
 
 namespace 'gemfury' do
   task :release => 'fury:release'
+end
+
+
+desc 'Run RuboCop on the lib directory'
+RuboCop::RakeTask.new(:rubocop) do |task|
+  task.patterns = ['lib/**/*.rb']
+  # only show the files with failures
+  # task.formatters = ['files']
+  # don't abort rake on failure
+  task.fail_on_error = false
 end
