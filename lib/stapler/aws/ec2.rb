@@ -85,7 +85,6 @@ module Stapler
       rescue Timeout::Error
         nil
       end
-
     end
   end
 end
