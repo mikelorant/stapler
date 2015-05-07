@@ -77,6 +77,7 @@ module Stapler
 
     def validate(action, config)
       fail ArgumentError, 'Missing arguments' unless send(action, config)
+      true
     end
 
     def attach(config)
