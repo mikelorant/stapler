@@ -77,10 +77,10 @@ module Stapler
 
       begin
         Timeout.timeout(600) do
-          while @ec2.describe_volumes(volume_ids: [resp.volume_id]).data.volumes.first.attachments.first.state != 'attached'
+          while @ec2.describe_volumes(volume_ids: [volume_id]).data.volumes.first.attachments.first.state != 'attached')
             sleep 5
           end
-          resp.volume_id
+          volume_id
         end
       rescue Timeout::Error
         nil
