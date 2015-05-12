@@ -4,4 +4,4 @@ require 'bundler/setup'
 
 require 'stapler'
 
-Stapler::Commandline.new.run
+Stapler::Commandline.start(ARGV)

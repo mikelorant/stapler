@@ -1,91 +1,59 @@
 # Stapler::Commandline
 
-require 'mixlib/cli'
+require 'thor'
 
 module Stapler
   # Stapler::Commandline
-  class Commandline
-    include Mixlib::CLI
+  class Commandline < Thor
+    package_name 'Stapler'
+    map ['-v', '--version'] => :version
 
-    option :help,        short:        '-h',
-                         long:         '--help',
-                         description:  'Show this message',
-                         on:           :tail,
-                         boolean:      true,
-                         show_options: true,
-                         exit:         0
+    desc 'version', 'Print the version and exit.'
 
-    option :project,     short:       '-p PROJECT',
-                         long:        '--project PROJECT',
-                         description: 'The project tag',
-                         default:     'GRPTECH_OnlineHosting'
-
-    option :application, short:       '-a APPLICATION',
-                         long:        '--application APPLICATION',
-                         description: 'The application tag',
-                         default:     'Unknown'
-
-    option :uuid,        short:       '-u UUID',
-                         long:        '--uuid UUID',
-                         description: 'The UUID tag'
-
-    option :device,      short:       '-d DEVICE',
-                         long:        '--device DEVICE',
-                         description: 'The device tag'
-
-    option :size,        short:       '-s SIZE',
-                         long:        '--size SIZE',
-                         description: 'The volume size',
-                         default:     100
-
-    option :type,        short:       '-t TYPE',
-                         long:        '--type TYPE',
-                         description: 'The volume type',
-                         default:     'standard'
-
-    def run
-      parse
+    def version
+      Stapler::Base.new.version
     end
 
-    private
+    desc 'attach', 'Refresh stopped instances in all load balancers.'
 
-    def parse
-      stapler = Stapler::Base.new
+    method_option :project,
+                  type:     :string,
+                  aliases:  '-p',
+                  required: true,
+                  desc:     'The project tag.'
 
-      cli = Stapler::Commandline.new
-      cli.parse_options
+    method_option :application,
+                  type:     :string,
+                  aliases:  '-a',
+                  required: true,
+                  desc:     'The application tag.'
 
-      case (action = action cli.cli_arguments)
-      when 'version'
-        stapler.version
-      when 'attach'
-        stapler.attach(cli.config, Stapler::Configuration.new.metadata) if validate(action, cli.config)
-      when 'snapshot'
-        puts 'snapshot'
-      else
-        puts cli.banner
-      end
+    method_option :uuid,
+                  type:     :string,
+                  aliases:  '-u',
+                  required: true,
+                  desc:     'The UUID tag.'
 
-    rescue ArgumentError => e
-      puts e.message
-      puts cli.banner
-    end
+    method_option :device,
+                  type:     :string,
+                  aliases:  '-d',
+                  default:  '/dev/sdf',
+                  desc:     'The device to use.'
 
-    def action(array)
-      array.select { |i| %w(version attach snapshot).include? i }.first
-    end
+    method_option :size,
+                  type:     :numeric,
+                  aliases:  '-s',
+                  default:  10,
+                  desc:     'The volume size.'
 
-    def validate(action, config)
-      fail ArgumentError, 'Missing arguments' unless send(action, config)
-      true
-    end
+    method_option :type,
+                  type:     :string,
+                  aliases:  '-t',
+                  default:  'standard',
+                  desc:     'The volume type.'
 
-    def attach(config)
-      config[:project] && config[:application] && config[:uuid] && config[:device]
-    end
-
-    def snapshot(config)
-      config[:project] && config[:application] && config[:uuid]
+    def attach
+      Stapler::Base.new.attach(options, Stapler::Configuration.new.metadata)
     end
   end
 end

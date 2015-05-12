@@ -5,12 +5,12 @@ module Stapler
       puts Stapler::VERSION
     end
 
-    def attach(config, metadata)
+    def attach(options, metadata)
       ec2 = Stapler::Ec2.new(metadata[:region])
 
-      project, application, uuid = config[:project], config[:application], config[:uuid]
-      device = config[:device]
-      size, type = config[:size], config[:type]
+      project, application, uuid = options[:project], options[:application], options[:uuid]
+      device = options[:device]
+      size, type = options[:size], options[:type]
 
       availability_zone = metadata[:availabilityZone]
       instance_id = metadata[:instanceId]
