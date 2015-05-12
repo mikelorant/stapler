@@ -17,6 +17,7 @@ module Stapler
         JSON.parse(resp.body, symbolize_names: true)
       end
     rescue Timeout::Error
+      puts 'Simulation mode enabled.'
       JSON.parse(File.read('simulate.json'), symbolize_names: true)
     end
   end

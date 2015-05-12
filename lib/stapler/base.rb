@@ -8,36 +8,29 @@ module Stapler
     def attach(options, metadata)
       ec2 = Stapler::Ec2.new(metadata[:region])
 
-      project, application, uuid = options[:project], options[:application], options[:uuid]
-      device = options[:device]
-      size, type = options[:size], options[:type]
-
-      availability_zone = metadata[:availabilityZone]
-      instance_id = metadata[:instanceId]
-
-      name = ec2.get_instance_name_by_instance_id(instance_id)
-      volume_name = format('%s-%s', name, device)
+      name = ec2.get_instance_name_by_instance_id(metadata[:instanceId])
+      volume_name = format('%s-%s', name, options[:device])
 
       puts 'Finding volume...'
-      if (snapshot_id = ec2.get_latest_snapshot_id_by_uuid(uuid))
+      if (snapshot_id = ec2.get_latest_snapshot_id_by_uuid(options[:uuid]))
         puts "Snapshot found: #{snapshot_id}"
       else
-        puts "No snapshot found. An empty #{type} volume will be created of #{size} GB."
+        puts "No snapshot found. An empty #{options[:type]} volume will be created of #{options[:size]} GB."
       end
 
       puts 'Creating volume...'
-      if (volume_id = ec2.create_volume(size, type, availability_zone, snapshot_id))
+      if (volume_id = ec2.create_volume(options[:size], options[:type], metadata[:availabilityZone], snapshot_id))
         puts "Volume created: #{volume_id}"
 
         puts 'Tagging volume...'
-        if ec2.tag_volume(volume_id, volume_name, project, application, uuid)
+        if ec2.tag_volume(volume_id, volume_name, options)
           puts 'Volume tagged.'
         else
           puts 'Volume failed tagging.'
         end
 
         puts 'Attaching volume...'
-        if ec2.attach_volume(volume_id, instance_id, device)
+        if ec2.attach_volume(volume_id, metadata[:instanceId], options[:device])
           puts 'Volume attached to instance.'
         else
           puts 'Volume attachment failed.'
@@ -45,6 +38,26 @@ module Stapler
         end
       else
         puts 'Volume failed creation.'
+        exit 1
+      end
+    end
+
+    def tag(options, metadata)
+      ec2 = Stapler::Ec2.new(metadata[:region])
+
+      puts 'Finding volumes...'
+      if (volumes = ec2.get_volume_id_by_instance_id(metadata[:instanceId]))
+        puts "Volumes found: #{volumes}"
+
+        volumes.each do |volume_id|
+          if ec2.tag_volume(volume_id, ec2.get_volume_name_by_volume_id(volume_id), options)
+            puts "Volume #{volume_id} tagged."
+          else
+            puts 'Volume failed tagging.'
+          end
+        end
+      else
+        puts 'No volumes found.'
         exit 1
       end
     end

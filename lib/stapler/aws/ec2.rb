@@ -13,24 +13,39 @@ module Stapler
     end
 
     def get_latest_snapshot_id_by_uuid(uuid)
-      @ec2.describe_snapshots(
-        filters: [
-          { name: 'tag-key',   values: ['UUID'] },
-          { name: 'tag-value', values: [uuid] },
-          { name: 'status',    values: ['completed'] }
-        ]
-      ).data.snapshots.sort_by(&:start_time).last.snapshot_id
+      filters = [
+        { name: 'tag-key',   values: ['UUID'] },
+        { name: 'tag-value', values: [uuid] },
+        { name: 'status',    values: ['completed'] }
+      ]
+
+      @ec2.describe_snapshots(filters: filters).data.snapshots.sort_by(&:start_time).last.snapshot_id
     rescue NoMethodError
       nil
     end
 
     def get_instance_name_by_instance_id(instance_id)
-      Aws::EC2::Client.new.describe_tags(
-        filters: [
-          { name: 'resource-id', values: [instance_id] },
-          { name: 'key',         values: ['Name'] }
-        ]
-      ).data.tags.first.value
+      filters = [
+        { name: 'resource-id', values: [instance_id] },
+        { name: 'key',         values: ['Name'] }
+      ]
+
+      @ec2.describe_tags(filters: filters).data.tags.first.value
+    end
+
+    def get_volume_id_by_instance_id(instance_id)
+      filters = [
+        { name: 'attachment.instance-id', values: [instance_id] }
+      ]
+
+      @ec2.describe_volumes(filters: filters).data.volumes.collect(&:volume_id)
+    end
+
+    def get_volume_name_by_volume_id(volume_id)
+      attachment = @ec2.describe_volumes(volume_ids: [volume_id]).data.volumes.first.attachments.first
+      instance_name = get_instance_name_by_instance_id(attachment.instance_id)
+
+      "#{instance_name}-#{attachment.device}"
     end
 
     def create_volume(size, volume_type, availability_zone, snapshot_id = nil)
@@ -53,16 +68,25 @@ module Stapler
       end
     end
 
-    def tag_volume(volume_id, volume_name, project, application, uuid)
+    def tag_volume(volume_id, volume_name, options)
+      tags = [
+        { key: 'Name',         value: volume_name },
+        { key: 'Project',      value: options[:project] },
+        { key: 'Environment',  value: options[:environment] },
+        { key: 'Creator',      value: options[:creator] },
+        { key: 'Expires',      value: options[:expires] },
+        { key: 'Service',      value: options[:service] },
+        { key: 'Management',   value: options[:management] },
+        { key: 'UUID',         value: options[:uuid] },
+        { key: 'SnapInterval', value: options[:snapinterval] },
+        { key: 'Detached',     value: options[:preserve] }
+      ]
+
+      tags = tags.reject { |tag| tag[:value].nil? }
+
       @ec2.create_tags(
         resources: [volume_id],
-        tags: [
-          { key: 'Name',        value: volume_name },
-          { key: 'Project',     value: project },
-          { key: 'Application', value: application },
-          { key: 'UUID',        value: uuid },
-          { key: 'ManagedBy',   value: 'Stapler' }
-        ]
+        tags: tags
       )
     rescue Aws::EC2::Errors::RequestLimitExceeded
       nil
