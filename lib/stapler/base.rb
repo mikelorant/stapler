@@ -14,6 +14,14 @@ module Stapler
       puts 'Finding volume...'
       if (volume_id = ec2.get_latest_volume_id_available_by_uuid(options[:uuid]))
         puts "Volume found: #{volume_id}"
+        puts 'Checking volume is in same availability zone as instance...'
+        if ec2.get_volume_region_by_volume_id(volume_id) != metadata[:availabilityZone]
+          puts 'Volume in another availability zone, snapshot required.'
+          if (snapshot_id = ec2.create_snapshot(volume_id))
+            puts "Snapshot created: #{snapshot_id}"
+            volume_id = nil
+          end
+        end
       elsif (snapshot_id = ec2.get_latest_snapshot_id_by_uuid(options[:uuid]))
         puts "Snapshot found: #{snapshot_id}"
       else

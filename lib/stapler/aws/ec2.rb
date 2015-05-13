@@ -59,6 +59,10 @@ module Stapler
       "#{instance_name}-#{attachment.device}"
     end
 
+    def get_volume_region_by_volume_id(volume_id)
+      @ec2.describe_volumes(volume_ids: [volume_id]).data.volumes.first.availability_zone
+    end
+
     def create_volume(size, volume_type, availability_zone, snapshot_id = nil)
       resp = @ec2.create_volume(
         size:              size,
@@ -73,6 +77,24 @@ module Stapler
             sleep 5
           end
           resp.volume_id
+        end
+      rescue Timeout::Error
+        nil
+      end
+    end
+
+    def create_snapshot(volume_id)
+      snapshot_id = @ec2.create_snapshot(volume_id: volume_id).snapshot_id
+      tags = @ec2.describe_volumes(volume_ids: [volume_id]).data.volumes.first.tags
+
+      tag_snapshot(snapshot_id, tags)
+
+      begin
+        Timeout.timeout(600) do
+          while @ec2.describe_snapshots(snapshot_ids: [snapshot_id]).data.snapshots.first.state != 'completed'
+            sleep 5
+          end
+          snapshot_id
         end
       rescue Timeout::Error
         nil
@@ -97,6 +119,15 @@ module Stapler
 
       @ec2.create_tags(
         resources: [volume_id],
+        tags: tags
+      )
+    rescue Aws::EC2::Errors::RequestLimitExceeded
+      nil
+    end
+
+    def tag_snapshot(snapshot_id, tags)
+      @ec2.create_tags(
+        resources: [snapshot_id],
         tags: tags
       )
     rescue Aws::EC2::Errors::RequestLimitExceeded
