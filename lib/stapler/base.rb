@@ -31,10 +31,10 @@ module Stapler
           else
             puts 'Volume failed tagging.'
           end
+        else
+          puts 'Volume failed creation.'
+          exit 1
         end
-      else
-        puts 'Volume failed creation.'
-        exit 1
       end
 
       if volume_id
