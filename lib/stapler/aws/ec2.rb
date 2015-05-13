@@ -12,6 +12,17 @@ module Stapler
       @ec2 = Aws::EC2::Client.new
     end
 
+    def get_latest_volume_id_available_by_uuid(uuid)
+      filters = [
+        { name: 'tag-key',   values: ['UUID'] },
+        { name: 'tag-value', values: [uuid] }
+      ]
+
+      @ec2.describe_volumes(filters: filters).data.volumes.sort_by(&:create_time).find_all { |volume| volume.state == 'available' }.last.volume_id
+    rescue NoMethodError
+      nil
+    end
+
     def get_latest_snapshot_id_by_uuid(uuid)
       filters = [
         { name: 'tag-key',   values: ['UUID'] },

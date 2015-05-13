@@ -12,23 +12,32 @@ module Stapler
       volume_name = format('%s-%s', name, options[:device])
 
       puts 'Finding volume...'
-      if (snapshot_id = ec2.get_latest_snapshot_id_by_uuid(options[:uuid]))
+      if (volume_id = ec2.get_latest_volume_id_available_by_uuid(options[:uuid]))
+        puts "Volume found: #{volume_id}"
+      elsif (snapshot_id = ec2.get_latest_snapshot_id_by_uuid(options[:uuid]))
         puts "Snapshot found: #{snapshot_id}"
       else
         puts "No snapshot found. An empty #{options[:type]} volume will be created of #{options[:size]} GB."
       end
 
-      puts 'Creating volume...'
-      if (volume_id = ec2.create_volume(options[:size], options[:type], metadata[:availabilityZone], snapshot_id))
-        puts "Volume created: #{volume_id}"
+      if !volume_id
+        puts 'Creating volume...'
+        if (volume_id = ec2.create_volume(options[:size], options[:type], metadata[:availabilityZone], snapshot_id))
+          puts "Volume created: #{volume_id}"
 
-        puts 'Tagging volume...'
-        if ec2.tag_volume(volume_id, volume_name, options)
-          puts 'Volume tagged.'
-        else
-          puts 'Volume failed tagging.'
+          puts 'Tagging volume...'
+          if ec2.tag_volume(volume_id, volume_name, options)
+            puts 'Volume tagged.'
+          else
+            puts 'Volume failed tagging.'
+          end
         end
+      else
+        puts 'Volume failed creation.'
+        exit 1
+      end
 
+      if volume_id
         puts 'Attaching volume...'
         if ec2.attach_volume(volume_id, metadata[:instanceId], options[:device])
           puts 'Volume attached to instance.'
@@ -36,9 +45,6 @@ module Stapler
           puts 'Volume attachment failed.'
           exit 1
         end
-      else
-        puts 'Volume failed creation.'
-        exit 1
       end
     end
 
