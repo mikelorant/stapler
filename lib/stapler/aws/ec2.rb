@@ -12,7 +12,7 @@ module Stapler
       @ec2 = Aws::EC2::Client.new
     end
 
-    def get_latest_volume_id_available_by_uuid(uuid)
+    def get_latest_volume_id_available(uuid)
       filters = [
         { name: 'tag-key',   values: ['UUID'] },
         { name: 'tag-value', values: [uuid] }
@@ -23,7 +23,7 @@ module Stapler
       nil
     end
 
-    def get_latest_snapshot_id_by_uuid(uuid)
+    def get_latest_snapshot_id(uuid)
       filters = [
         { name: 'tag-key',   values: ['UUID'] },
         { name: 'tag-value', values: [uuid] },
@@ -35,7 +35,7 @@ module Stapler
       nil
     end
 
-    def get_instance_name_by_instance_id(instance_id)
+    def get_instance_name(instance_id)
       filters = [
         { name: 'resource-id', values: [instance_id] },
         { name: 'key',         values: ['Name'] }
@@ -44,7 +44,7 @@ module Stapler
       @ec2.describe_tags(filters: filters).data.tags.first.value
     end
 
-    def get_volume_id_by_instance_id(instance_id)
+    def get_volume_id(instance_id)
       filters = [
         { name: 'attachment.instance-id', values: [instance_id] }
       ]
@@ -52,14 +52,14 @@ module Stapler
       @ec2.describe_volumes(filters: filters).data.volumes.collect(&:volume_id)
     end
 
-    def get_volume_name_by_volume_id(volume_id)
+    def get_volume_name(volume_id)
       attachment = @ec2.describe_volumes(volume_ids: [volume_id]).data.volumes.first.attachments.first
-      instance_name = get_instance_name_by_instance_id(attachment.instance_id)
+      instance_name = get_instance_name(attachment.instance_id)
 
       "#{instance_name}-#{attachment.device}"
     end
 
-    def get_volume_region_by_volume_id(volume_id)
+    def get_volume_region(volume_id)
       @ec2.describe_volumes(volume_ids: [volume_id]).data.volumes.first.availability_zone
     end
 
