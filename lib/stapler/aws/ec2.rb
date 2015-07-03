@@ -119,7 +119,7 @@ module Stapler
 
       @ec2.create_tags(
         resources: [volume_id],
-        tags: tags.map(&:to_h)
+        tags: tags
       )
     rescue Aws::EC2::Errors::RequestLimitExceeded
       nil
@@ -128,7 +128,7 @@ module Stapler
     def tag_snapshot(snapshot_id, tags)
       @ec2.create_tags(
         resources: [snapshot_id],
-        tags: tags
+        tags: tags.map(&:to_h)
       )
     rescue Aws::EC2::Errors::RequestLimitExceeded
       nil
