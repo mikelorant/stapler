@@ -42,6 +42,8 @@ module Stapler
       ]
 
       @ec2.describe_tags(filters: filters).data.tags.first.value
+    rescue NoMethodError
+      nil
     end
 
     def get_volume_id(instance_id)

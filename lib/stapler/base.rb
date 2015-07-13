@@ -8,7 +8,7 @@ module Stapler
     def attach(options, metadata)
       ec2 = Stapler::Ec2.new(metadata[:region])
 
-      name = ec2.get_instance_name(metadata[:instanceId])
+      name = ec2.get_instance_name(metadata[:instanceId]) || metadata[:instanceId]
       volume_name = format('%s-%s', name, options[:device])
 
       puts 'Finding volume...'
